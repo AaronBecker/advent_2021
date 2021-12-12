@@ -69,6 +69,80 @@ fn day_2(input: String) {
     println!("{}", position * depth);
 }
 
+fn day_3(input: String) {
+    let binvals: Vec<&str> = input.split('\n').filter(|s| !s.is_empty()).collect();
+    let width = binvals[0].len();
+    let mut position_sums = vec![0; width];
+    for val in &binvals {
+        for (i, c) in val.chars().enumerate() {
+            match c {
+                '0' => (),
+                '1' => position_sums[i] += 1,
+                _ => panic!("Unexpected input {}", val),
+            }
+        }
+    }
+
+    let mut epsilon = 0;
+    let mut gamma = 0;
+    for i in 0..width {
+        epsilon *= 2;
+        gamma *= 2;
+        if position_sums[i] > binvals.len() / 2 {
+            gamma += 1;
+        } else {
+            epsilon += 1;
+        }
+    }
+    println!("{}", epsilon * gamma);
+
+    let mut o2_candidates: Vec<&&str> = binvals.iter().collect();
+    let mut o2_value = 0;
+    for i in 0..width {
+        let digit_sum: usize = o2_candidates
+            .iter()
+            .map(|c| if c.as_bytes()[i] == '1' as u8 { 1 } else { 0 })
+            .sum();
+        let common_bit = if digit_sum * 2 >= o2_candidates.len() {
+            '1' as u8
+        } else {
+            '0' as u8
+        };
+        o2_candidates = o2_candidates
+            .into_iter()
+            .filter(|c| c.as_bytes()[i] == common_bit)
+            .collect();
+        if o2_candidates.len() == 1 {
+            o2_value = isize::from_str_radix(o2_candidates[0], 2).unwrap();
+            break;
+        }
+    }
+
+    let mut co2_candidates: Vec<&&str> = binvals.iter().collect();
+    let mut co2_value = 0;
+    for i in 0..width {
+        let digit_sum: usize = co2_candidates
+            .iter()
+            .map(|c| if c.as_bytes()[i] == '1' as u8 { 1 } else { 0 })
+            .sum();
+        let common_bit = if digit_sum * 2 >= co2_candidates.len() {
+            '1' as u8
+        } else {
+            '0' as u8
+        };
+        co2_candidates = co2_candidates
+            .into_iter()
+            .filter(|c| c.as_bytes()[i] != common_bit)
+            .collect();
+        if co2_candidates.len() == 1 {
+            co2_value = isize::from_str_radix(co2_candidates[0], 2).unwrap();
+            break;
+        }
+    }
+
+    println!("{}", o2_value * co2_value);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -79,7 +153,7 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2];
+    let funcs = [day_1, day_2, day_3];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
