@@ -320,6 +320,124 @@ fn day_7(input: String) {
     println!("{}", min_cost);
 }
 
+fn day_8(input: String) {
+    let entries: Vec<Vec<Vec<String>>> = input
+        .lines()
+        .map(|e| {
+            e.split(" | ")
+                .map(|half| {
+                    half.trim()
+                        .split(' ')
+                        .map(|s| {
+                            let mut chs: Vec<char> = s.chars().collect();
+                            chs.sort();
+                            String::from_iter(chs.iter())
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect();
+    let out_count: usize = entries
+        .iter()
+        .map(|e| {
+            e[1].iter()
+                .filter(|x| x.len() == 2 || x.len() == 3 || x.len() == 4 || x.len() == 7)
+                .count()
+        })
+        .sum();
+    println!("{}", out_count);
+
+    let mut global_sum = 0;
+    for entry in &entries {
+        let mut digit_map: HashMap<i32, &String> = HashMap::new();
+        let mut segment_map: HashMap<&String, i32> = HashMap::new();
+        let sets: Vec<(&String, HashSet<char>)> = entry[0]
+            .iter()
+            .map(|e| (e, e.chars().collect::<HashSet<char>>()))
+            .collect();
+        let mut matched_sets = HashSet::new();
+        // Match 1, 4, 7, 8
+        for s in &sets {
+            let matched = match s.0.len() {
+                2 => 1,
+                3 => 7,
+                4 => 4,
+                7 => 8,
+                _ => 0,
+            };
+            if matched != 0 {
+                digit_map.insert(matched, s.0);
+                segment_map.insert(s.0, matched);
+                matched_sets.insert(s.0);
+            }
+        }
+        // Match 9, 3, 6
+        for s in &sets {
+            if s.0.len() == 5 {
+                if digit_map[&7]
+                    .chars()
+                    .collect::<HashSet<char>>()
+                    .is_subset(&s.1)
+                {
+                    digit_map.insert(3, s.0);
+                    segment_map.insert(s.0, 3);
+                    matched_sets.insert(s.0);
+                }
+            } else if s.0.len() == 6 {
+                if !digit_map[&1]
+                    .chars()
+                    .collect::<HashSet<char>>()
+                    .is_subset(&s.1)
+                {
+                    digit_map.insert(6, s.0);
+                    segment_map.insert(s.0, 6);
+                    matched_sets.insert(s.0);
+                } else if digit_map[&4]
+                    .chars()
+                    .collect::<HashSet<char>>()
+                    .is_subset(&s.1)
+                {
+                    digit_map.insert(9, s.0);
+                    segment_map.insert(s.0, 9);
+                    matched_sets.insert(s.0);
+                }
+            }
+        }
+        // Match 5, 0, 2
+        for s in &sets {
+            if matched_sets.contains(&s.0) {
+                continue;
+            }
+            if s.0.len() == 5 {
+                if s.1
+                    .is_subset(&digit_map[&9].chars().collect::<HashSet<char>>())
+                {
+                    digit_map.insert(5, s.0);
+                    segment_map.insert(s.0, 5);
+                    matched_sets.insert(s.0);
+                } else {
+                    digit_map.insert(2, s.0);
+                    segment_map.insert(s.0, 2);
+                    matched_sets.insert(s.0);
+                }
+            } else {
+                digit_map.insert(0, s.0);
+                segment_map.insert(s.0, 0);
+                matched_sets.insert(s.0);
+            }
+        }
+
+        let mut digit_sum = 0;
+        for e in &entry[1] {
+            digit_sum *= 10;
+            digit_sum += segment_map[e];
+        }
+        global_sum += digit_sum;
+    }
+    println!("{}", global_sum);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -330,7 +448,7 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2, day_3, day_4, day_5, day_6, day_7];
+    let funcs = [day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
