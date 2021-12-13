@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -143,6 +144,78 @@ fn day_3(input: String) {
     println!("{}", o2_value * co2_value);
 }
 
+fn day_4(input: String) {
+    let mut lines = input.split('\n');
+    let draws: Vec<i32> = lines
+        .next()
+        .unwrap()
+        .split(',')
+        .map(|n| n.parse::<i32>().unwrap())
+        .collect();
+    let mut boards: Vec<Vec<i32>> = Vec::new();
+    boards.push(Vec::new());
+    lines
+        .filter(|s| !s.is_empty())
+        .map(|s| {
+            for val in s.split(' ').filter(|s| !s.is_empty()) {
+                let ival = val.parse::<i32>().unwrap();
+                boards.last_mut().unwrap().push(ival);
+                if boards.last().unwrap().len() == 25 {
+                    boards.push(Vec::new());
+                }
+            }
+        })
+        .for_each(drop);
+    boards.pop(); // remove empty final board
+
+    fn board_wins(board: &Vec<i32>, draws: &HashSet<i32>) -> bool {
+        for i in 0..5 {
+            if draws.contains(&board[i * 5])
+                && draws.contains(&board[i * 5 + 1])
+                && draws.contains(&board[i * 5 + 2])
+                && draws.contains(&board[i * 5 + 3])
+                && draws.contains(&board[i * 5 + 4])
+            {
+                return true;
+            }
+            if draws.contains(&board[i])
+                && draws.contains(&board[i + 5])
+                && draws.contains(&board[i + 10])
+                && draws.contains(&board[i + 15])
+                && draws.contains(&board[i + 20])
+            {
+                return true;
+            }
+        }
+        false
+    }
+    let mut marked: HashSet<i32> = HashSet::new();
+    'draw_loop: for draw in &draws {
+        marked.insert(*draw);
+        for board in &boards {
+            if board_wins(&board, &marked) {
+                let score: i32 = board.iter().filter(|s| !marked.contains(s)).sum::<i32>() * draw;
+                println!("{}", score);
+                break 'draw_loop;
+            }
+        }
+    }
+
+    marked.clear();
+    let mut last_score = 0;
+    for draw in &draws {
+        marked.insert(*draw);
+        boards.retain(|b| {
+            let win = board_wins(&b, &marked);
+            if win {
+                last_score = b.iter().filter(|s| !marked.contains(s)).sum::<i32>() * draw;
+            }
+            !win
+        })
+    }
+    println!("{}", last_score);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -153,7 +226,7 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2, day_3];
+    let funcs = [day_1, day_2, day_3, day_4];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
