@@ -1,3 +1,5 @@
+use std::cmp;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::env;
 use std::fs;
@@ -216,6 +218,60 @@ fn day_4(input: String) {
     println!("{}", last_score);
 }
 
+fn day_5(input: String) {
+    let vents: Vec<Vec<i32>> = input
+        .lines()
+        .map(|l| {
+            l.split(" -> ")
+                .map(|p| {
+                    p.split(',')
+                        .map(|val| val.parse::<i32>().unwrap())
+                        .collect::<Vec<i32>>()
+                })
+                .flatten()
+                .collect()
+        })
+        .collect();
+
+    let mut vent_count = HashMap::new();
+    for vent in &vents {
+        if vent[0] == vent[2] {
+            // horizontal vent
+            for i in cmp::min(vent[1], vent[3])..cmp::max(vent[1], vent[3]) + 1 {
+                *vent_count.entry((vent[0], i)).or_insert(0) += 1;
+            }
+        } else if vent[1] == vent[3] {
+            // vertical vent
+            for i in cmp::min(vent[0], vent[2])..cmp::max(vent[0], vent[2]) + 1 {
+                *vent_count.entry((i, vent[1])).or_insert(0) += 1;
+            }
+        }
+    }
+
+    let multi_vent = vent_count.iter().filter(|v| *v.1 > 1).count();
+    println!("{}", multi_vent);
+
+    for vent in &vents {
+        if vent[0] != vent[2] && vent[1] != vent[3] {
+            // diagonal vent
+            let dx = if vent[0] - vent[2] > 0 { -1 } else { 1 };
+            let dy = if vent[1] - vent[3] > 0 { -1 } else { 1 };
+
+            let mut x = vent[0];
+            let mut y = vent[1];
+            while (x, y) != (vent[2], vent[3]) {
+                *vent_count.entry((x, y)).or_insert(0) += 1;
+                x += dx;
+                y += dy;
+            }
+            *vent_count.entry((x, y)).or_insert(0) += 1;
+        }
+    }
+
+    let multi_vent = vent_count.iter().filter(|v| *v.1 > 1).count();
+    println!("{}", multi_vent);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -226,7 +282,7 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2, day_3, day_4];
+    let funcs = [day_1, day_2, day_3, day_4, day_5];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
