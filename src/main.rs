@@ -272,6 +272,54 @@ fn day_5(input: String) {
     println!("{}", multi_vent);
 }
 
+fn day_6(input: String) {
+    let mut fish_counts: Vec<u64> = vec![0; 7];
+    input
+        .trim()
+        .split(',')
+        .map(|x| fish_counts[x.parse::<usize>().unwrap()] += 1)
+        .for_each(drop);
+
+    let mut t8 = 0;
+    let mut t7 = 0;
+    println!("{}", usize::BITS);
+    for gen in 0..256 {
+        let tmp = fish_counts[gen % 7];
+        fish_counts[gen % 7] += t7;
+        t7 = t8;
+        t8 = tmp;
+        if gen == 79 {
+            println!("{}", t7 + t8 + fish_counts.iter().sum::<u64>());
+        }
+    }
+    println!("{}", t7 + t8 + fish_counts.iter().sum::<u64>());
+}
+
+fn day_7(input: String) {
+    let mut pos: Vec<i32> = input
+        .trim()
+        .split(',')
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect();
+    pos.sort();
+    let median = pos[pos.len() / 2];
+    let cost: i32 = pos.iter().map(|x| (median - x).abs()).sum();
+    println!("{}", cost);
+
+    let mut min_cost = i32::MAX;
+    for i in pos[0]..pos[pos.len() - 1] {
+        let cost: i32 = pos
+            .iter()
+            .map(|x| {
+                let dist = (i - x).abs();
+                dist * (dist + 1) / 2
+            })
+            .sum();
+        min_cost = cmp::min(min_cost, cost);
+    }
+    println!("{}", min_cost);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -282,7 +330,7 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2, day_3, day_4, day_5];
+    let funcs = [day_1, day_2, day_3, day_4, day_5, day_6, day_7];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
