@@ -614,6 +614,8 @@ fn day_11(input: String) {
     println!("{}", all_flash_gen + 1);
 }
 
+fn day_12(input: String) {}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -625,7 +627,7 @@ fn problem_input(input_num: usize) -> String {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let funcs = [
-        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11,
+        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11, day_12,
     ];
 
     if args.len() < 2 || args.len() > 3 {
