@@ -548,6 +548,72 @@ fn day_10(input: String) {
     println!("{}", complete_scores[complete_scores.len() / 2]);
 }
 
+fn day_11(input: String) {
+    let mut energy: Vec<Vec<u32>> = input
+        .lines()
+        .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect();
+
+    let mut flashes = 0;
+    let mut flashes_100 = 0;
+    let mut all_flash_gen = 0;
+    for gen in 0..1000 {
+        let flash_start = flashes;
+        let mut to_flash: Vec<(i32, i32)> = Vec::new();
+        for x in 0..10 {
+            for y in 0..10 {
+                energy[y][x] += 1;
+                if energy[y][x] == 10 {
+                    to_flash.push((x as i32, y as i32));
+                }
+            }
+        }
+        while !to_flash.is_empty() {
+            let (x, y) = to_flash.pop().unwrap();
+            flashes += 1;
+            for (xx, yy) in [
+                (x - 1, y - 1),
+                (x, y - 1),
+                (x + 1, y - 1),
+                (x - 1, y),
+                (x + 1, y),
+                (x - 1, y + 1),
+                (x, y + 1),
+                (x + 1, y + 1),
+            ] {
+                if xx == -1 || xx == 10 || yy == -1 || yy == 10 {
+                    continue;
+                }
+                energy[yy as usize][xx as usize] += 1;
+                if energy[yy as usize][xx as usize] == 10 {
+                    to_flash.push((xx, yy));
+                }
+            }
+        }
+        for x in 0..10 {
+            for y in 0..10 {
+                if energy[y][x] > 9 {
+                    energy[y][x] = 0;
+                }
+            }
+        }
+        if gen == 99 {
+            flashes_100 = flashes;
+            if all_flash_gen != 0 {
+                break;
+            }
+        }
+        if flashes - flash_start == 100 {
+            all_flash_gen = gen;
+            if gen > 99 {
+                break;
+            }
+        }
+    }
+    println!("{}", flashes_100);
+    println!("{}", all_flash_gen + 1);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -559,7 +625,7 @@ fn problem_input(input_num: usize) -> String {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let funcs = [
-        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10,
+        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11,
     ];
 
     if args.len() < 2 || args.len() > 3 {
