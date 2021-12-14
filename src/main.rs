@@ -438,6 +438,63 @@ fn day_8(input: String) {
     println!("{}", global_sum);
 }
 
+fn day_9(input: String) {
+    let heights: Vec<Vec<u32>> = input
+        .lines()
+        .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect();
+    fn risk(heights: &Vec<Vec<u32>>, x: usize, y: usize) -> u32 {
+        let h = heights[y][x];
+        let high = (x > 0 && heights[y][x - 1] <= h)
+            || (x < heights[0].len() - 1 && heights[y][x + 1] <= h)
+            || (y > 0 && heights[y - 1][x] <= h)
+            || (y < heights.len() - 1 && heights[y + 1][x] <= h);
+        if high {
+            0
+        } else {
+            heights[y][x] + 1
+        }
+    }
+    let mut visited: HashSet<(i32, i32)> = HashSet::new();
+    fn basin(heights: &Vec<Vec<u32>>, visited: &mut HashSet<(i32, i32)>, x: i32, y: i32) -> u32 {
+        if visited.contains(&(x, y)) || heights[y as usize][x as usize] == 9 {
+            return 0;
+        }
+
+        let mut size = 0;
+        let mut to_search = vec![(x, y)];
+        while !to_search.is_empty() {
+            let (px, py) = to_search.pop().unwrap();
+            if visited.contains(&(px, py)) || heights[py as usize][px as usize] == 9 {
+                continue;
+            }
+            size += 1;
+            visited.insert((px, py));
+            for (xx, yy) in [(px + 1, py), (px - 1, py), (px, py + 1), (px, py - 1)] {
+                if xx >= 0 && xx < heights[0].len() as i32 && yy >= 0 && yy < heights.len() as i32 {
+                    to_search.push((xx, yy));
+                }
+            }
+        }
+        size
+    }
+
+    let mut risk_sum = 0;
+    let mut basins = Vec::new();
+    for y in 0..heights.len() {
+        for x in 0..heights[0].len() {
+            risk_sum += risk(&heights, x, y);
+            let b = basin(&heights, &mut visited, x as i32, y as i32);
+            if b != 0 {
+                basins.push(b);
+            }
+        }
+    }
+    println!("{}", risk_sum);
+    basins.sort();
+    println!("{}", basins.iter().rev().take(3).product::<u32>());
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -448,7 +505,9 @@ fn problem_input(input_num: usize) -> String {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let funcs = [day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8];
+    let funcs = [
+        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9,
+    ];
 
     if args.len() < 2 || args.len() > 3 {
         println!("usage: {} <input number> [input file path]", args[0]);
