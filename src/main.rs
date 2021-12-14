@@ -495,6 +495,59 @@ fn day_9(input: String) {
     println!("{}", basins.iter().rev().take(3).product::<u32>());
 }
 
+fn day_10(input: String) {
+    fn line_score(line: &str) -> (i32, u64) {
+        let mut stack = Vec::new();
+        for c in line.chars() {
+            match c {
+                '(' | '[' | '{' | '<' => stack.push(c),
+                ')' => {
+                    if stack.is_empty() || stack.pop().unwrap() != '(' {
+                        return (3, 0);
+                    }
+                }
+                ']' => {
+                    if stack.is_empty() || stack.pop().unwrap() != '[' {
+                        return (57, 0);
+                    }
+                }
+                '}' => {
+                    if stack.is_empty() || stack.pop().unwrap() != '{' {
+                        return (1197, 0);
+                    }
+                }
+                '>' => {
+                    if stack.is_empty() || stack.pop().unwrap() != '<' {
+                        return (25137, 0);
+                    }
+                }
+                _ => (),
+            }
+        }
+        let mut score = 0;
+        for c in stack.iter().rev() {
+            let cscore = match c {
+                '(' => 1,
+                '[' => 2,
+                '{' => 3,
+                '<' => 4,
+                _ => panic!("unexpected character {} on stack", c),
+            };
+            score = score * 5 + cscore;
+        }
+        (0, score)
+    }
+    let corrupt_score = input.lines().map(|l| line_score(l).0).sum::<i32>();
+    println!("{}", corrupt_score);
+    let mut complete_scores = input
+        .lines()
+        .map(|l| line_score(l).1)
+        .filter(|x| *x != 0)
+        .collect::<Vec<u64>>();
+    complete_scores.sort();
+    println!("{}", complete_scores[complete_scores.len() / 2]);
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -506,7 +559,7 @@ fn problem_input(input_num: usize) -> String {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let funcs = [
-        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9,
+        day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10,
     ];
 
     if args.len() < 2 || args.len() > 3 {
