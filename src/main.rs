@@ -614,7 +614,52 @@ fn day_11(input: String) {
     println!("{}", all_flash_gen + 1);
 }
 
-fn day_12(input: String) {}
+fn day_12(input: String) {
+    let mut nodes: Vec<&str> = Vec::new();
+    let mut graph: HashMap<&str, Vec<&str>> = HashMap::new();
+    for line in input.lines() {
+        let mut pieces = line.split('-');
+        let (n1, n2) = (pieces.next().unwrap(), pieces.next().unwrap());
+        nodes.push(n1);
+        nodes.push(n2);
+        graph.entry(n1).or_insert(Vec::new()).push(n2);
+        graph.entry(n2).or_insert(Vec::new()).push(n1);
+    }
+
+    fn dfs<'a>(
+        graph: &'a HashMap<&str, Vec<&str>>,
+        path: &mut Vec<&'a str>,
+        source: &'a str,
+        dest: &'a str,
+        allow_revisit: bool,
+    ) -> Vec<Vec<&'a str>> {
+        if source == dest {
+            return vec![vec![dest]];
+        }
+        path.push(source);
+        let mut paths = Vec::new();
+        for n in &graph[source] {
+            let mut revisit_step = allow_revisit;
+            if n.chars().next().unwrap().is_lowercase() && path.contains(n) {
+                if !allow_revisit || *n == "start" || *n == "end" {
+                    continue;
+                } else {
+                    revisit_step = false;
+                }
+            }
+            let partial_paths = dfs(graph, path, n, dest, revisit_step);
+            for mut p in partial_paths {
+                p.push(source);
+                paths.push(p);
+            }
+        }
+        path.pop();
+        paths
+    }
+    let mut path = Vec::new();
+    let paths = dfs(&graph, &mut path, "start", "end", true);
+    println!("{}", paths.len());
+}
 
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
