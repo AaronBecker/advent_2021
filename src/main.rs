@@ -661,6 +661,73 @@ fn day_12(input: String) {
     println!("{}", paths.len());
 }
 
+fn day_13(input: String) {
+    let mut points = HashSet::new();
+    let mut folds = Vec::new();
+    for l in input.lines() {
+        if l.is_empty() {
+            continue;
+        }
+        match l.strip_prefix("fold along ") {
+            Some(suffix) => {
+                let mut xy = suffix.split('=');
+                folds.push((
+                    xy.next().unwrap(),
+                    xy.next().unwrap().parse::<u32>().unwrap(),
+                ));
+            }
+            None => {
+                let mut xy = l.split(',');
+                points.insert((
+                    xy.next().unwrap().parse::<u32>().unwrap(),
+                    xy.next().unwrap().parse::<u32>().unwrap(),
+                ));
+            }
+        }
+    }
+
+    fn reflect_up(points: &mut HashSet<(u32, u32)>, pivot: u32) {
+        let inserts: Vec<(u32, u32)> = points
+            .iter()
+            .filter(|(_, y)| y > &pivot)
+            .map(|(x, y)| (*x, pivot - (y - pivot)))
+            .collect();
+        points.retain(|(_, y)| y < &pivot);
+        points.extend(inserts);
+    }
+    fn reflect_left(points: &mut HashSet<(u32, u32)>, pivot: u32) {
+        let inserts: Vec<(u32, u32)> = points
+            .iter()
+            .filter(|(x, _)| x > &pivot)
+            .map(|(x, y)| (pivot - (x - pivot), *y))
+            .collect();
+        points.retain(|(x, _)| x < &pivot);
+        points.extend(inserts);
+    }
+    for (i, (dir, pivot)) in folds.iter().enumerate() {
+        match *dir {
+            "x" => reflect_left(&mut points, *pivot),
+            "y" => reflect_up(&mut points, *pivot),
+            _ => panic!("unexpected fold"),
+        }
+        if i == 0 {
+            println!("{}", points.len());
+        }
+    }
+    let max_x = *points.iter().map(|(x, _)| x).max().unwrap();
+    let max_y = *points.iter().map(|(_, y)| y).max().unwrap();
+    for y in 0..max_y + 1 {
+        for x in 0..max_x + 1 {
+            if points.contains(&(x, y)) {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!("");
+    }
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -673,6 +740,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let funcs = [
         day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11, day_12,
+        day_13,
     ];
 
     if args.len() < 2 || args.len() > 3 {
