@@ -728,6 +728,60 @@ fn day_13(input: String) {
     }
 }
 
+fn day_14(input: String) {
+    let mut lines = input.lines();
+    let polymer: Vec<char> = lines.next().unwrap().chars().collect();
+    let mut rules: HashMap<(char, char), char> = HashMap::new();
+    lines
+        .filter(|l| !l.is_empty())
+        .map(|l| {
+            rules.insert(
+                (l.chars().nth(0).unwrap(), l.chars().nth(1).unwrap()),
+                l.chars().nth(6).unwrap(),
+            );
+        })
+        .for_each(drop);
+    let mut pairs: HashMap<(char, char), u64> = HashMap::new();
+    for i in 0..polymer.len() - 1 {
+        *pairs.entry((polymer[i], polymer[i + 1])).or_insert(0) += 1;
+    }
+
+    fn report(polymer: &Vec<char>, pairs: &HashMap<(char, char), u64>) {
+        let mut hist = HashMap::new();
+        pairs
+            .iter()
+            .map(|(k, v)| {
+                *hist.entry(k.0).or_insert(0) += v;
+                *hist.entry(k.1).or_insert(0) += v;
+            })
+            .for_each(drop);
+        // The first and last element only appear in one pair each.
+        *hist.entry(polymer[0]).or_insert(0) += 1;
+        *hist.entry(polymer[polymer.len() - 1]).or_insert(0) += 1;
+        let max_letter = hist.iter().max_by(|x, y| x.1.cmp(&y.1)).unwrap();
+        let min_letter = hist.iter().max_by(|x, y| y.1.cmp(&x.1)).unwrap();
+        println!("{}", max_letter.1 / 2 - min_letter.1 / 2);
+    }
+
+    for gen in 0..40 {
+        let mut to_insert: HashMap<(char, char), u64> = HashMap::new();
+        for (a, b) in pairs.keys() {
+            if rules.contains_key(&(*a, *b)) {
+                let c = rules[&(*a, *b)];
+                *to_insert.entry((*a, c)).or_insert(0) += pairs[&(*a, *b)];
+                *to_insert.entry((c, *b)).or_insert(0) += pairs[&(*a, *b)];
+            }
+        }
+        pairs.retain(|k, _| !rules.contains_key(k));
+        for (k, v) in to_insert.iter() {
+            *pairs.entry(*k).or_insert(0) += v;
+        }
+        if gen == 9 || gen == 39 {
+            report(&polymer, &pairs);
+        }
+    }
+}
+
 fn problem_input(input_num: usize) -> String {
     let inpath = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("inputs")
@@ -740,7 +794,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let funcs = [
         day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11, day_12,
-        day_13,
+        day_13, day_14,
     ];
 
     if args.len() < 2 || args.len() > 3 {
